@@ -1,0 +1,50 @@
+name: Generate F1 Static Data
+
+on:
+  schedule:
+    # S'exécute tous les lundis à 8h00 UTC
+    - cron: '0 8 * * 1'
+  workflow_dispatch: # Permet de lancer le script manuellement depuis l'interface GitHub
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. Récupérer le code du dépôt
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    # 2. Installer Python
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    # 3. Mettre en cache FastF1 (évite de re-télécharger 500Mo à chaque fois)
+    - name: Cache FastF1 data
+      uses: actions/cache@v4
+      with:
+        path: fastf1_cache
+        key: fastf1-cache-${{ hashFiles('**/update_data.py') }}
+        restore-keys: |
+          fastf1-cache-
+
+    # 4. Installer les dépendances
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install fastf1 pandas
+
+    # 5. Lancer le script de génération des JSON
+    - name: Run script
+      run: python update_data.py
+
+    # 6. Pousser les nouveaux fichiers JSON sur le dépôt
+    - name: Commit and Push changes
+      run: |
+        git config --global user.name "GitHub Action"
+        git config --global user.email "action@github.com"
+        git add docs/api/*.json
+        # Ne commiter que s'il y a des changements
+        git diff-index --quiet HEAD || (git commit -m "Mise à jour automatique des données F1" && git push)
