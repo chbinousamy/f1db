@@ -3,8 +3,14 @@ import json
 import pandas as pd
 import fastf1
 
-# Activer le cache local pour accélérer les exécutions futures
-fastf1.Cache.enable_cache('fastf1_cache')
+# 1. Définir le nom du dossier de cache
+CACHE_DIR = 'fastf1_cache'
+
+# 2. Créer le dossier s'il n'existe pas (évite l'erreur NotADirectoryError)
+os.makedirs(CACHE_DIR, exist_ok=True)
+
+# 3. Activer le cache
+fastf1.Cache.enable_cache(CACHE_DIR)
 
 def clean_for_nosql(df):
     clean_df = df.copy()
